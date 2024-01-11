@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"log"
+	"math/rand"
 	"time"
 )
 
@@ -45,11 +46,7 @@ func initScreen() *game {
 	screen.Clear()
 
 	w, h := screen.Size()
-
-	cells := make([][]bool, w)
-	for i := range cells {
-		cells[i] = make([]bool, h)
-	}
+	cells := generateCells(w, h)
 
 	return &game{
 		isRunning: true,
@@ -75,11 +72,11 @@ func (g *game) gameLoop() {
 	}
 	defer quit(g.screen)
 
-	delay := time.Millisecond * 100 // 100ms
-
 	for g.isRunning {
 		g.screen.Show()
 		ev := g.screen.PollEvent()
+
+		g.progress()
 
 		if g.grid.needsRefreshed {
 			g.renderGamestate()
@@ -96,8 +93,6 @@ func (g *game) gameLoop() {
 				g.isRunning = false
 			}
 		}
-
-		time.Sleep(delay)
 	}
 }
 
@@ -114,6 +109,70 @@ func (g *game) renderGamestate() {
 	}
 
 	g.grid.needsRefreshed = false
+}
+
+func (g *game) progress() {
+	currentGrid := g.grid.cells
+	tempGrid := make([][]bool, len(currentGrid))
+
+	for x := range currentGrid {
+		tempGrid[x] = make([]bool, len(currentGrid[x]))
+		for y := range currentGrid[x] {
+			count := g.countNeighbors(x, y)
+
+			if currentGrid[x][y] {
+				tempGrid[x][y] = count == 2 || count == 3
+			} else {
+				tempGrid[x][y] = count == 3
+			}
+		}
+	}
+
+	g.grid.cells = tempGrid
+	g.grid.needsRefreshed = true
+}
+
+func (g *game) countNeighbors(x int, y int) int {
+	count := 0
+
+	for dx := -1; dx <= 1; dx++ {
+		for dy := -1; dy <= 1; dy++ {
+			if dx == 0 && dy == 0 {
+				continue
+			}
+
+			nx := x + dx
+			ny := y + dy
+
+			if g.withinBounds(nx, ny) {
+				if g.grid.cells[nx][ny] {
+					count++
+				}
+			}
+		}
+	}
+
+	return count
+}
+
+func (g *game) withinBounds(x int, y int) bool {
+	return x >= 0 && x < len(g.grid.cells) && y >= 0 && y < len(g.grid.cells[x])
+}
+
+func generateCells(w int, h int) [][]bool {
+	cells := make([][]bool, w)
+	for i := range cells {
+		cells[i] = make([]bool, h)
+	}
+
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	for x := 0; x < len(cells); x++ {
+		for y := 0; y < len(cells[x]); y++ {
+			cells[x][y] = rand.Float32() < 0.15
+		}
+	}
+
+	return cells
 }
 
 func reportError(msg error) {
