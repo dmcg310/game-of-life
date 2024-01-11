@@ -1,16 +1,26 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
+	"encoding/json"
+	"io"
 	"log"
 	"math/rand"
+	"os"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
 )
 
+// {
+// "preset": "random",
+// "cell-color": "default",
+// "background-color": "default"
+// }
+
 type config struct {
-    termW int
-    termH int
-    randomnessValue float32
+	Preset          string `json:"preset"`
+	CellColor       string `json:"cell-color"`
+	BackgroundColor string `json:"backgroundColor"`
 }
 
 type grid struct {
@@ -22,21 +32,30 @@ type game struct {
 	isRunning bool
 	grid      grid
 	screen    tcell.Screen
-    config config
 }
 
 func main() {
-	initScreen().gameLoop()
-}
+    c, err := readConfig()
+    if err != nil {
+        reportError(err)
+    }
 
-func initScreen() *game {
-	screen, err := tcell.NewScreen()
+	s, err := initScreen()
 	if err != nil {
 		reportError(err)
 	}
 
+	newGame(s, c).gameLoop()
+}
+
+func initScreen() (tcell.Screen, error) {
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		return nil, err
+	}
+
 	if err := screen.Init(); err != nil {
-		reportError(err)
+		return nil, err
 	}
 
 	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).
@@ -46,14 +65,20 @@ func initScreen() *game {
 	screen.EnableMouse()
 	screen.Clear()
 
-	w, h := screen.Size()
-    config := config{
-        termW: w,
-        termH: h,
-        randomnessValue: 0.17,
-    }
+	return screen, nil
+}
 
-	cells := config.generateCells()
+func newGame(screen tcell.Screen, c *config) *game {
+    var cells [][]bool
+
+	w, h := screen.Size()
+    if c != nil {
+        if c.Preset  == "random" {
+            cells = generateRandomCells(w, h)
+        }
+    } else {
+        cells = generateRandomCells(w, h)
+    }
 
 	return &game{
 		isRunning: true,
@@ -62,7 +87,6 @@ func initScreen() *game {
 			needsRefreshed: true,
 		},
 		screen: screen,
-        config: config,
 	}
 }
 
@@ -163,20 +187,41 @@ func (g *game) withinBounds(x int, y int) bool {
 	return x >= 0 && x < len(g.grid.cells) && y >= 0 && y < len(g.grid.cells[x])
 }
 
-func (c *config) generateCells() [][]bool {
-	cells := make([][]bool, c.termW)
+func generateRandomCells(w int, h int) [][]bool {
+	cells := make([][]bool, w)
 	for i := range cells {
-		cells[i] = make([]bool, c.termH)
+		cells[i] = make([]bool, h)
 	}
 
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	for x := 0; x < len(cells); x++ {
 		for y := 0; y < len(cells[x]); y++ {
-			cells[x][y] = rand.Float32() < c.randomnessValue
+			cells[x][y] = rand.Float32() < 0.25
 		}
 	}
 
 	return cells
+}
+
+func readConfig() (*config, error) {
+	file, err := os.Open("gol-config.json")
+    // if the file isnt found that is ok, just continue with defaults
+	if err != nil {
+        return nil, nil
+	}
+	defer file.Close()
+
+	bytes, err := io.ReadAll(file)
+	if err != nil {
+        return nil, err
+	}
+
+	var config config
+	if err := json.Unmarshal(bytes, &config); err != nil {
+        return nil, err
+	}
+
+	return &config, nil
 }
 
 func reportError(msg error) {
