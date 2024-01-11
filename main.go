@@ -11,12 +11,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// {
-// "preset": "random",
-// "cell-color": "default",
-// "background-color": "default"
-// }
-
 type config struct {
 	Preset          string `json:"preset"`
 	CellColor       string `json:"cell-color"`
@@ -35,10 +29,10 @@ type game struct {
 }
 
 func main() {
-    c, err := readConfig()
-    if err != nil {
-        reportError(err)
-    }
+	c, err := readConfig()
+	if err != nil {
+		reportError(err)
+	}
 
 	s, err := initScreen()
 	if err != nil {
@@ -69,16 +63,19 @@ func initScreen() (tcell.Screen, error) {
 }
 
 func newGame(screen tcell.Screen, c *config) *game {
-    var cells [][]bool
+	var cells [][]bool
 
 	w, h := screen.Size()
-    if c != nil {
-        if c.Preset  == "random" {
-            cells = generateRandomCells(w, h)
-        }
-    } else {
-        cells = generateRandomCells(w, h)
-    }
+	// w, h := 50, 50
+	if c != nil {
+		if c.Preset == "random" {
+			cells = generateRandomCells(w, h)
+		} else {
+			cells = generatePatternCells(w, h, c.Preset)
+		}
+	} else {
+		cells = generateRandomCells(w, h)
+	}
 
 	return &game{
 		isRunning: true,
@@ -125,14 +122,15 @@ func (g *game) gameLoop() {
 }
 
 func (g *game) renderGamestate() {
+	cellChar := '█'
+
 	for x := 0; x < len(g.grid.cells); x++ {
 		for y := 0; y < len(g.grid.cells[x]); y++ {
-			char := ' '
 			if g.grid.cells[x][y] {
-				char = 'x'
+				g.screen.SetContent(x, y, cellChar, nil, tcell.StyleDefault)
+			} else {
+				g.screen.SetContent(x, y, ' ', nil, tcell.StyleDefault)
 			}
-
-			g.screen.SetContent(x, y, char, nil, tcell.StyleDefault)
 		}
 	}
 
@@ -187,6 +185,76 @@ func (g *game) withinBounds(x int, y int) bool {
 	return x >= 0 && x < len(g.grid.cells) && y >= 0 && y < len(g.grid.cells[x])
 }
 
+func generatePatternCells(w int, h int, pattern string) [][]bool {
+	cells := make([][]bool, w)
+	for i := range cells {
+		cells[i] = make([]bool, h)
+	}
+
+	centerX, centerY := w/2, h/2
+
+	switch pattern {
+	// oscillators
+	case "blinker":
+		points := []struct{ x, y int }{{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY}}
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
+	case "toad":
+		points := []struct{ x, y int }{{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY},
+			{centerX, centerY + 1}, {centerX + 1, centerY + 1}, {centerX + 2, centerY + 1}}
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
+	case "beacon":
+		points := []struct{ x, y int }{
+			{centerX - 2, centerY - 1}, {centerX - 2, centerY - 2},
+			{centerX - 1, centerY - 2}, {centerX + 1, centerY},
+			{centerX + 1, centerY + 1}, {centerX, centerY + 1},
+		}
+
+		setCells(points, cells)
+	case "lwss":
+		points := []struct{ x, y int }{
+			{centerX - 1, centerY + 1}, {centerX + 2, centerY + 1},
+			{centerX - 2, centerY},
+			{centerX - 2, centerY - 1}, {centerX + 2, centerY - 1},
+			{centerX - 2, centerY - 2}, {centerX - 1, centerY - 2}, {centerX, centerY - 2}, {centerX + 1, centerY - 2},
+		}
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
+	case "gosper glider gun":
+		points := []struct{ x, y int }{
+			// todo
+		}
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
+
+	case "glider":
+		points := []struct{ x, y int }{{1, 0}, {2, 1}, {0, 2}, {1, 2}, {2, 2}}
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
+	case "block":
+		points := []struct{ x, y int }{{0, 0}, {1, 0}, {0, 1}, {1, 1}}
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
+	}
+
+	return cells
+}
+
+func setCells(points []struct{ x, y int }, cells [][]bool) {
+	for _, p := range points {
+		if p.x >= 0 && p.x < len(cells) && p.y >= 0 && p.y < len(cells[0]) {
+			cells[p.x][p.y] = true
+		}
+	}
+}
+
 func generateRandomCells(w int, h int) [][]bool {
 	cells := make([][]bool, w)
 	for i := range cells {
@@ -205,20 +273,20 @@ func generateRandomCells(w int, h int) [][]bool {
 
 func readConfig() (*config, error) {
 	file, err := os.Open("gol-config.json")
-    // if the file isnt found that is ok, just continue with defaults
+	// if the file isnt found that is ok, just continue with defaults
 	if err != nil {
-        return nil, nil
+		return nil, nil
 	}
 	defer file.Close()
 
 	bytes, err := io.ReadAll(file)
 	if err != nil {
-        return nil, err
+		return nil, err
 	}
 
 	var config config
 	if err := json.Unmarshal(bytes, &config); err != nil {
-        return nil, err
+		return nil, err
 	}
 
 	return &config, nil
