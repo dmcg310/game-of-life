@@ -7,21 +7,22 @@ import (
 	"time"
 )
 
+type config struct {
+    termW int
+    termH int
+    randomnessValue float32
+}
+
 type grid struct {
 	cells          [][]bool
 	needsRefreshed bool
-}
-
-type terminal struct {
-	width  int
-	height int
 }
 
 type game struct {
 	isRunning bool
 	grid      grid
 	screen    tcell.Screen
-	terminal  terminal
+    config config
 }
 
 func main() {
@@ -46,7 +47,13 @@ func initScreen() *game {
 	screen.Clear()
 
 	w, h := screen.Size()
-	cells := generateCells(w, h)
+    config := config{
+        termW: w,
+        termH: h,
+        randomnessValue: 0.17,
+    }
+
+	cells := config.generateCells()
 
 	return &game{
 		isRunning: true,
@@ -55,10 +62,7 @@ func initScreen() *game {
 			needsRefreshed: true,
 		},
 		screen: screen,
-		terminal: terminal{
-			width:  w,
-			height: h,
-		},
+        config: config,
 	}
 }
 
@@ -159,16 +163,16 @@ func (g *game) withinBounds(x int, y int) bool {
 	return x >= 0 && x < len(g.grid.cells) && y >= 0 && y < len(g.grid.cells[x])
 }
 
-func generateCells(w int, h int) [][]bool {
-	cells := make([][]bool, w)
+func (c *config) generateCells() [][]bool {
+	cells := make([][]bool, c.termW)
 	for i := range cells {
-		cells[i] = make([]bool, h)
+		cells[i] = make([]bool, c.termH)
 	}
 
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	for x := 0; x < len(cells); x++ {
 		for y := 0; y < len(cells[x]); y++ {
-			cells[x][y] = rand.Float32() < 0.15
+			cells[x][y] = rand.Float32() < c.randomnessValue
 		}
 	}
 
