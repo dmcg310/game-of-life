@@ -16,6 +16,8 @@ type config struct {
 	Preset          string `json:"preset"`
 	CellColor       string `json:"cell-color"`
 	BackgroundColor string `json:"backgroundColor"`
+	ScaleFactor     int    `json:"scale-factor"`
+	FPS             int    `json:"fps"`
 }
 
 type grid struct {
@@ -25,9 +27,11 @@ type grid struct {
 
 type game struct {
 	isRunning bool
+	isPaused  bool
 	grid      grid
 	screen    tcell.Screen
 	turn      int
+	FPS       int
 }
 
 func main() {
@@ -58,7 +62,6 @@ func initScreen() (tcell.Screen, error) {
 		Foreground(tcell.ColorReset)
 
 	screen.SetStyle(defStyle)
-	screen.EnableMouse()
 	screen.Clear()
 
 	return screen, nil
@@ -86,6 +89,7 @@ func newGame(screen tcell.Screen, c *config) *game {
 		},
 		screen: screen,
 		turn:   0,
+		FPS:    c.FPS,
 	}
 }
 
