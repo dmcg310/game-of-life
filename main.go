@@ -207,13 +207,19 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 	switch pattern {
 	// oscillators
 	case "blinker":
-		points := []struct{ x, y int }{{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY}}
+		points := []struct{ x, y int }{
+			{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY},
+		}
+
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
 	case "toad":
-		points := []struct{ x, y int }{{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY},
-			{centerX, centerY + 1}, {centerX + 1, centerY + 1}, {centerX + 2, centerY + 1}}
+		points := []struct{ x, y int }{
+			{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY},
+			{centerX, centerY + 1}, {centerX + 1, centerY + 1}, {centerX + 2, centerY + 1},
+		}
+
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
@@ -224,7 +230,9 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 			{centerX + 1, centerY + 1}, {centerX, centerY + 1},
 		}
 
-		setCells(points, cells)
+		for _, p := range points {
+			cells[p.x][p.y] = true
+		}
 	case "lwss":
 		points := []struct{ x, y int }{
 			{centerX - 1, centerY + 1}, {centerX + 2, centerY + 1},
@@ -232,38 +240,53 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 			{centerX - 2, centerY - 1}, {centerX + 2, centerY - 1},
 			{centerX - 2, centerY - 2}, {centerX - 1, centerY - 2}, {centerX, centerY - 2}, {centerX + 1, centerY - 2},
 		}
+
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
 	case "gosper glider gun":
+		offsetX, offsetY := centerX-18, centerY-5 // Adjust these values based on the pattern size
 		points := []struct{ x, y int }{
-			// todo
+			{offsetX + 0, offsetY + 4}, {offsetX + 0, offsetY + 5},
+			{offsetX + 1, offsetY + 4}, {offsetX + 1, offsetY + 5},
+			{offsetX + 10, offsetY + 4}, {offsetX + 10, offsetY + 5}, {offsetX + 10, offsetY + 6},
+			{offsetX + 11, offsetY + 3}, {offsetX + 11, offsetY + 7},
+			{offsetX + 12, offsetY + 2}, {offsetX + 12, offsetY + 8},
+			{offsetX + 13, offsetY + 2}, {offsetX + 13, offsetY + 8},
+			{offsetX + 14, offsetY + 5},
+			{offsetX + 15, offsetY + 3}, {offsetX + 15, offsetY + 7},
+			{offsetX + 16, offsetY + 4}, {offsetX + 16, offsetY + 5}, {offsetX + 16, offsetY + 6},
+			{offsetX + 17, offsetY + 5},
+			{offsetX + 20, offsetY + 2}, {offsetX + 20, offsetY + 3}, {offsetX + 20, offsetY + 4},
+			{offsetX + 21, offsetY + 2}, {offsetX + 21, offsetY + 3}, {offsetX + 21, offsetY + 4},
+			{offsetX + 22, offsetY + 1}, {offsetX + 22, offsetY + 5},
+			{offsetX + 24, offsetY + 0}, {offsetX + 24, offsetY + 1}, {offsetX + 24, offsetY + 5}, {offsetX + 24, offsetY + 6},
+			{offsetX + 34, offsetY + 2}, {offsetX + 34, offsetY + 3},
+			{offsetX + 35, offsetY + 2}, {offsetX + 35, offsetY + 3},
 		}
+
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
-
 	case "glider":
-		points := []struct{ x, y int }{{1, 0}, {2, 1}, {0, 2}, {1, 2}, {2, 2}}
+		points := []struct{ x, y int }{
+			{1, 0}, {2, 1}, {0, 2}, {1, 2}, {2, 2},
+		}
+
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
 	case "block":
-		points := []struct{ x, y int }{{0, 0}, {1, 0}, {0, 1}, {1, 1}}
+		points := []struct{ x, y int }{
+			{0, 0}, {1, 0}, {0, 1}, {1, 1},
+		}
+
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
 	}
 
 	return cells
-}
-
-func setCells(points []struct{ x, y int }, cells [][]bool) {
-	for _, p := range points {
-		if p.x >= 0 && p.x < len(cells) && p.y >= 0 && p.y < len(cells[0]) {
-			cells[p.x][p.y] = true
-		}
-	}
 }
 
 func generateRandomCells(w int, h int) [][]bool {
