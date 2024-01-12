@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -26,6 +27,7 @@ type game struct {
 	isRunning bool
 	grid      grid
 	screen    tcell.Screen
+	turn      int
 }
 
 func main() {
@@ -66,7 +68,6 @@ func newGame(screen tcell.Screen, c *config) *game {
 	var cells [][]bool
 
 	w, h := screen.Size()
-	// w, h := 50, 50
 	if c != nil {
 		if c.Preset == "random" {
 			cells = generateRandomCells(w, h)
@@ -84,6 +85,7 @@ func newGame(screen tcell.Screen, c *config) *game {
 			needsRefreshed: true,
 		},
 		screen: screen,
+		turn:   0,
 	}
 }
 
@@ -134,6 +136,14 @@ func (g *game) renderGamestate() {
 		}
 	}
 
+	gridWidth := len(g.grid.cells)
+	turnStr := fmt.Sprintf("Turn: %d", g.turn)
+	for i, rune := range turnStr {
+		g.screen.
+			SetContent(gridWidth-len(turnStr)+i, 0, rune, nil,
+				tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorBlack))
+	}
+
 	g.grid.needsRefreshed = false
 }
 
@@ -156,6 +166,7 @@ func (g *game) progress() {
 
 	g.grid.cells = tempGrid
 	g.grid.needsRefreshed = true
+	g.turn++
 }
 
 func (g *game) countNeighbors(x int, y int) int {
