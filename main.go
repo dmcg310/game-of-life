@@ -146,6 +146,8 @@ func (g *Game) run() {
 			case *tcell.EventKey:
 				if ev.Rune() == 'p' {
 					g.isPaused = !g.isPaused
+					g.renderGamestate()
+					g.screen.Show()
 				}
 
 				if ev.Rune() == ' ' && g.isPaused {
