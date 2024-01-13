@@ -1,5 +1,25 @@
 # game-of-life
 
+### Colors
+
+Following colors are known to be supported:
+- black
+- maroon
+- green
+- olive
+- navy
+- purple
+- teal
+- silver
+- gray
+- red
+- lime
+- yellow
+- blue
+- fuchsia
+- aqua
+- white
+
 ### References
 
 - [tcell](https://github.com/gdamore/tcell)

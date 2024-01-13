@@ -1,7 +1,7 @@
 {
     "preset": "gosper glider gun",
-    "cell-color": "default",
-    "background-color": "default",
+    "cell-color": "white",
+    "background-color": "red",
     "scale-factor": 1,
     "fps": 30
 }

@@ -20,6 +20,11 @@ type Config struct {
 	FPS             int    `json:"fps"`
 }
 
+type Colors struct {
+	cellStyle       tcell.Style
+	backgroundStyle tcell.Style
+}
+
 type Grid struct {
 	cells          [][]bool
 	needsRefreshed bool
@@ -32,6 +37,7 @@ type Game struct {
 	screen    tcell.Screen
 	turn      int
 	FPS       int
+	colors    Colors
 }
 
 func main() {
@@ -81,6 +87,8 @@ func newGame(screen tcell.Screen, c *Config) *Game {
 		cells = generateRandomCells(w, h)
 	}
 
+    colors := newColors(c)
+
 	return &Game{
 		isRunning: true,
 		isPaused:  true,
@@ -91,7 +99,31 @@ func newGame(screen tcell.Screen, c *Config) *Game {
 		screen: screen,
 		turn:   0,
 		FPS:    c.FPS,
+		colors: colors,
 	}
+}
+
+func newColors(c *Config) Colors {
+	var cellStyle, backgroundStyle tcell.Style
+
+	if c.CellColor != "" {
+		cellColor := tcell.GetColor(c.CellColor)
+		cellStyle = tcell.StyleDefault.Foreground(cellColor)
+	} else {
+		cellStyle = tcell.StyleDefault
+	}
+
+	if c.BackgroundColor != "" {
+		backgroundColor := tcell.GetColor(c.BackgroundColor)
+		backgroundStyle = tcell.StyleDefault.Background(backgroundColor)
+	} else {
+		backgroundStyle = tcell.StyleDefault
+	}
+
+    return Colors{
+        cellStyle: cellStyle,
+        backgroundStyle: backgroundStyle,
+    }
 }
 
 func (g *Game) run() {
@@ -177,9 +209,9 @@ func (g *Game) renderGamestate() {
 	for x := 0; x < len(g.grid.cells); x++ {
 		for y := 0; y < len(g.grid.cells[x]); y++ {
 			if g.grid.cells[x][y] {
-				g.screen.SetContent(x, y, cellChar, nil, tcell.StyleDefault)
+				g.screen.SetContent(x, y, cellChar, nil, g.colors.cellStyle)
 			} else {
-				g.screen.SetContent(x, y, ' ', nil, tcell.StyleDefault)
+				g.screen.SetContent(x, y, ' ', nil, g.colors.backgroundStyle)
 			}
 		}
 	}
