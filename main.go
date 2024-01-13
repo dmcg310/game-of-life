@@ -64,30 +64,37 @@ func initScreen() (tcell.Screen, error) {
 		return nil, err
 	}
 
-	defStyle := tcell.StyleDefault.Background(tcell.ColorReset).
-		Foreground(tcell.ColorReset)
-
-	screen.SetStyle(defStyle)
 	screen.Clear()
 
 	return screen, nil
 }
 
 func newGame(screen tcell.Screen, c *Config) *Game {
-	var cells [][]bool
-
 	w, h := screen.Size()
+
+	var cells [][]bool
+	var colors Colors
+	var fps int
+
 	if c != nil {
-		if c.Preset == "random" {
+		if c.Preset == "" {
 			cells = generateRandomCells(w, h)
 		} else {
 			cells = generatePatternCells(w, h, c.Preset)
 		}
+
+		colors = customColors(c)
+
+		if c.FPS == 0 {
+			fps = 23
+		} else {
+			fps = c.FPS
+		}
 	} else {
 		cells = generateRandomCells(w, h)
+		colors = defaultColors()
+		fps = 23
 	}
-
-	colors := newColors(c)
 
 	return &Game{
 		isRunning: true,
@@ -98,12 +105,19 @@ func newGame(screen tcell.Screen, c *Config) *Game {
 		},
 		screen: screen,
 		turn:   0,
-		FPS:    c.FPS,
+		FPS:    fps,
 		colors: colors,
 	}
 }
 
-func newColors(c *Config) Colors {
+func defaultColors() Colors {
+	return Colors{
+		cellStyle:       tcell.StyleDefault,
+		backgroundStyle: tcell.StyleDefault,
+	}
+}
+
+func customColors(c *Config) Colors {
 	var cellStyle, backgroundStyle tcell.Style
 
 	if c.CellColor != "" {
@@ -401,6 +415,8 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
+	default:
+		return generateRandomCells(w, h)
 	}
 
 	return cells
