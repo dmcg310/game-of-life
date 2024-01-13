@@ -15,7 +15,7 @@ import (
 type Config struct {
 	Preset          string `json:"preset"`
 	CellColor       string `json:"cell-color"`
-	BackgroundColor string `json:"backgroundColor"`
+	BackgroundColor string `json:"background-color"`
 	ScaleFactor     int    `json:"scale-factor"`
 	FPS             int    `json:"fps"`
 }
@@ -87,7 +87,7 @@ func newGame(screen tcell.Screen, c *Config) *Game {
 		cells = generateRandomCells(w, h)
 	}
 
-    colors := newColors(c)
+	colors := newColors(c)
 
 	return &Game{
 		isRunning: true,
@@ -120,10 +120,10 @@ func newColors(c *Config) Colors {
 		backgroundStyle = tcell.StyleDefault
 	}
 
-    return Colors{
-        cellStyle: cellStyle,
-        backgroundStyle: backgroundStyle,
-    }
+	return Colors{
+		cellStyle:       cellStyle,
+		backgroundStyle: backgroundStyle,
+	}
 }
 
 func (g *Game) run() {
