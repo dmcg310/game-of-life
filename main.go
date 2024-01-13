@@ -12,7 +12,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-type config struct {
+type Config struct {
 	Preset          string `json:"preset"`
 	CellColor       string `json:"cell-color"`
 	BackgroundColor string `json:"backgroundColor"`
@@ -20,15 +20,15 @@ type config struct {
 	FPS             int    `json:"fps"`
 }
 
-type grid struct {
+type Grid struct {
 	cells          [][]bool
 	needsRefreshed bool
 }
 
-type game struct {
+type Game struct {
 	isRunning bool
 	isPaused  bool
-	grid      grid
+	grid      Grid
 	screen    tcell.Screen
 	turn      int
 	FPS       int
@@ -45,7 +45,7 @@ func main() {
 		reportError(err)
 	}
 
-	newGame(s, c).gameLoop()
+	newGame(s, c).run()
 }
 
 func initScreen() (tcell.Screen, error) {
@@ -67,7 +67,7 @@ func initScreen() (tcell.Screen, error) {
 	return screen, nil
 }
 
-func newGame(screen tcell.Screen, c *config) *game {
+func newGame(screen tcell.Screen, c *Config) *Game {
 	var cells [][]bool
 
 	w, h := screen.Size()
@@ -81,9 +81,10 @@ func newGame(screen tcell.Screen, c *config) *game {
 		cells = generateRandomCells(w, h)
 	}
 
-	return &game{
+	return &Game{
 		isRunning: true,
-		grid: grid{
+		isPaused:  true,
+		grid: Grid{
 			cells:          cells,
 			needsRefreshed: true,
 		},
@@ -93,7 +94,12 @@ func newGame(screen tcell.Screen, c *config) *game {
 	}
 }
 
-func (g *game) gameLoop() {
+func (g *Game) run() {
+	eventq := make(chan tcell.Event)
+	quitq := make(chan struct{})
+	ticker := time.NewTicker(time.Second / time.Duration(g.FPS))
+	defer ticker.Stop()
+
 	quit := func(screen tcell.Screen) {
 		maybePanic := recover()
 		screen.Fini()
@@ -103,31 +109,67 @@ func (g *game) gameLoop() {
 	}
 	defer quit(g.screen)
 
-	for g.isRunning {
-		g.screen.Show()
-		ev := g.screen.PollEvent()
+	go func() {
+		for {
+			ev := g.screen.PollEvent()
+			if ev == nil {
+				return
+			}
 
-		g.progress()
+			eventq <- ev
+		}
+	}()
 
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if !g.isPaused {
+					g.progress()
+				}
+			case <-quitq:
+				return
+			}
+		}
+	}()
+
+	for {
 		if g.grid.needsRefreshed {
 			g.renderGamestate()
 			g.screen.Show()
+			g.grid.needsRefreshed = false
 		}
 
-		switch ev := ev.(type) {
-		case *tcell.EventResize:
-			g.screen.Sync()
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEscape ||
-				ev.Key() == tcell.KeyCtrlC ||
-				ev.Rune() == 'q' {
-				g.isRunning = false
+		select {
+		case ev := <-eventq:
+			switch ev := ev.(type) {
+			case *tcell.EventKey:
+				if ev.Rune() == 'p' {
+					g.isPaused = !g.isPaused
+				}
+
+				if ev.Rune() == ' ' && g.isPaused {
+					g.progress()
+					g.renderGamestate()
+					g.screen.Show()
+				}
+
+				if ev.Key() == tcell.KeyEscape ||
+					ev.Key() == tcell.KeyCtrlC ||
+					ev.Rune() == 'q' {
+					close(quitq)
+					return
+				}
 			}
+		case <-quitq:
+			break
+		default:
+			time.Sleep(time.Millisecond * 10) // 10ms
 		}
 	}
 }
 
-func (g *game) renderGamestate() {
+func (g *Game) renderGamestate() {
 	cellChar := '█'
 
 	for x := 0; x < len(g.grid.cells); x++ {
@@ -140,18 +182,50 @@ func (g *game) renderGamestate() {
 		}
 	}
 
-	gridWidth := len(g.grid.cells)
-	turnStr := fmt.Sprintf("Turn: %d", g.turn)
-	for i, rune := range turnStr {
-		g.screen.
-			SetContent(gridWidth-len(turnStr)+i, 0, rune, nil,
-				tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorBlack))
+	offset := 0
+	offset = g.renderInt("FPS", g.FPS, offset)
+	offset = g.renderInt("TURN", g.turn, offset)
+
+	if g.isPaused {
+		offset = g.renderContent("PAUSED", offset)
+	} else {
+		offset = g.renderContent("RUNNING", offset)
 	}
 
 	g.grid.needsRefreshed = false
+	_ = offset
 }
 
-func (g *game) progress() {
+func (g *Game) renderInt(msg string, value int, offset int) int {
+	str := fmt.Sprintf("%s %d", msg, value)
+	gridWidth := len(g.grid.cells)
+
+	for i, rune := range str {
+		g.screen.SetContent(gridWidth-len(str)+i, offset, rune, nil,
+			tcell.StyleDefault.
+				Foreground(tcell.ColorWhite).
+				Background(tcell.ColorBlack))
+	}
+
+	offset++
+	return offset
+}
+
+func (g *Game) renderContent(msg string, offset int) int {
+	gridWidth := len(g.grid.cells)
+
+	for i, rune := range msg {
+		g.screen.SetContent(gridWidth-len(msg)+i, offset, rune, nil,
+			tcell.StyleDefault.
+				Foreground(tcell.ColorWhite).
+				Background(tcell.ColorBlack))
+	}
+
+	offset++
+	return offset
+}
+
+func (g *Game) progress() {
 	currentGrid := g.grid.cells
 	tempGrid := make([][]bool, len(currentGrid))
 
@@ -173,7 +247,7 @@ func (g *game) progress() {
 	g.turn++
 }
 
-func (g *game) countNeighbors(x int, y int) int {
+func (g *Game) countNeighbors(x int, y int) int {
 	count := 0
 
 	for dx := -1; dx <= 1; dx++ {
@@ -196,7 +270,7 @@ func (g *game) countNeighbors(x int, y int) int {
 	return count
 }
 
-func (g *game) withinBounds(x int, y int) bool {
+func (g *Game) withinBounds(x int, y int) bool {
 	return x >= 0 && x < len(g.grid.cells) && y >= 0 && y < len(g.grid.cells[x])
 }
 
@@ -212,7 +286,8 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 	// oscillators
 	case "blinker":
 		points := []struct{ x, y int }{
-			{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY},
+			{centerX - 1, centerY}, {centerX, centerY},
+			{centerX + 1, centerY},
 		}
 
 		for _, p := range points {
@@ -220,8 +295,9 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 		}
 	case "toad":
 		points := []struct{ x, y int }{
-			{centerX - 1, centerY}, {centerX, centerY}, {centerX + 1, centerY},
-			{centerX, centerY + 1}, {centerX + 1, centerY + 1}, {centerX + 2, centerY + 1},
+			{centerX - 1, centerY}, {centerX, centerY},
+			{centerX + 1, centerY}, {centerX, centerY + 1},
+			{centerX + 1, centerY + 1}, {centerX + 2, centerY + 1},
 		}
 
 		for _, p := range points {
@@ -240,31 +316,34 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 	case "lwss":
 		points := []struct{ x, y int }{
 			{centerX - 1, centerY + 1}, {centerX + 2, centerY + 1},
-			{centerX - 2, centerY},
-			{centerX - 2, centerY - 1}, {centerX + 2, centerY - 1},
-			{centerX - 2, centerY - 2}, {centerX - 1, centerY - 2}, {centerX, centerY - 2}, {centerX + 1, centerY - 2},
+			{centerX - 2, centerY}, {centerX - 2, centerY - 1},
+			{centerX + 2, centerY - 1}, {centerX - 2, centerY - 2},
+			{centerX - 1, centerY - 2}, {centerX, centerY - 2},
+			{centerX + 1, centerY - 2},
 		}
 
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
 	case "gosper glider gun":
-		offsetX, offsetY := centerX-18, centerY-5 // Adjust these values based on the pattern size
+		offsetX, offsetY := centerX-18, centerY-5
 		points := []struct{ x, y int }{
 			{offsetX + 0, offsetY + 4}, {offsetX + 0, offsetY + 5},
 			{offsetX + 1, offsetY + 4}, {offsetX + 1, offsetY + 5},
-			{offsetX + 10, offsetY + 4}, {offsetX + 10, offsetY + 5}, {offsetX + 10, offsetY + 6},
-			{offsetX + 11, offsetY + 3}, {offsetX + 11, offsetY + 7},
-			{offsetX + 12, offsetY + 2}, {offsetX + 12, offsetY + 8},
-			{offsetX + 13, offsetY + 2}, {offsetX + 13, offsetY + 8},
-			{offsetX + 14, offsetY + 5},
+			{offsetX + 10, offsetY + 4}, {offsetX + 10, offsetY + 5},
+			{offsetX + 10, offsetY + 6}, {offsetX + 11, offsetY + 3},
+			{offsetX + 11, offsetY + 7}, {offsetX + 12, offsetY + 2},
+			{offsetX + 12, offsetY + 8}, {offsetX + 13, offsetY + 2},
+			{offsetX + 13, offsetY + 8}, {offsetX + 14, offsetY + 5},
 			{offsetX + 15, offsetY + 3}, {offsetX + 15, offsetY + 7},
-			{offsetX + 16, offsetY + 4}, {offsetX + 16, offsetY + 5}, {offsetX + 16, offsetY + 6},
-			{offsetX + 17, offsetY + 5},
-			{offsetX + 20, offsetY + 2}, {offsetX + 20, offsetY + 3}, {offsetX + 20, offsetY + 4},
-			{offsetX + 21, offsetY + 2}, {offsetX + 21, offsetY + 3}, {offsetX + 21, offsetY + 4},
+			{offsetX + 16, offsetY + 4}, {offsetX + 16, offsetY + 5},
+			{offsetX + 16, offsetY + 6}, {offsetX + 17, offsetY + 5},
+			{offsetX + 20, offsetY + 2}, {offsetX + 20, offsetY + 3},
+			{offsetX + 20, offsetY + 4}, {offsetX + 21, offsetY + 2},
+			{offsetX + 21, offsetY + 3}, {offsetX + 21, offsetY + 4},
 			{offsetX + 22, offsetY + 1}, {offsetX + 22, offsetY + 5},
-			{offsetX + 24, offsetY + 0}, {offsetX + 24, offsetY + 1}, {offsetX + 24, offsetY + 5}, {offsetX + 24, offsetY + 6},
+			{offsetX + 24, offsetY + 0}, {offsetX + 24, offsetY + 1},
+			{offsetX + 24, offsetY + 5}, {offsetX + 24, offsetY + 6},
 			{offsetX + 34, offsetY + 2}, {offsetX + 34, offsetY + 3},
 			{offsetX + 35, offsetY + 2}, {offsetX + 35, offsetY + 3},
 		}
@@ -309,7 +388,7 @@ func generateRandomCells(w int, h int) [][]bool {
 	return cells
 }
 
-func readConfig() (*config, error) {
+func readConfig() (*Config, error) {
 	file, err := os.Open("gol-config.json")
 	// if the file isnt found that is ok, just continue with defaults
 	if err != nil {
@@ -322,7 +401,7 @@ func readConfig() (*config, error) {
 		return nil, err
 	}
 
-	var config config
+	var config Config
 	if err := json.Unmarshal(bytes, &config); err != nil {
 		return nil, err
 	}
