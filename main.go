@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+)
+
+const (
+	defaultFPS      = 23
+	defaultPattern  = "random"
+	defaultFilename = "gol-config.json"
 )
 
 type Config struct {
@@ -41,59 +46,44 @@ type Game struct {
 }
 
 func main() {
-	c, err := readConfig()
-	if err != nil {
-		reportError(err)
-	}
-
-	s, err := initScreen()
-	if err != nil {
-		reportError(err)
-	}
+	c := readConfig()
+	s := initScreen()
 
 	newGame(s, c).run()
 }
 
-func initScreen() (tcell.Screen, error) {
+func initScreen() tcell.Screen {
 	screen, err := tcell.NewScreen()
 	if err != nil {
-		return nil, err
+		newAppError(err, "Cannot create a new terminal screen.",
+			"Please try to re-run the program.").showAppErrorFatal()
 	}
 
-	if err := screen.Init(); err != nil {
-		return nil, err
+	if err := screen.Init(); err == nil {
+		newAppError(err, "Cannot initalise the terminal screen.",
+			"Please try to re-run the program, and maybe reset the terminal using `$ reset`").showAppErrorFatal()
 	}
 
-	screen.Clear()
-
-	return screen, nil
+	return screen
 }
 
 func newGame(screen tcell.Screen, c *Config) *Game {
 	w, h := screen.Size()
 
-	var cells [][]bool
-	var colors Colors
-	var fps int
+	var (
+		colors Colors
+		fps    int
+		cells  [][]bool
+	)
 
 	if c != nil {
-		if c.Preset == "" {
-			cells = generateRandomCells(w, h)
-		} else {
-			cells = generatePatternCells(w, h, c.Preset)
-		}
-
 		colors = customColors(c)
-
-		if c.FPS == 0 {
-			fps = 23
-		} else {
-			fps = c.FPS
-		}
+		fps = c.FPS
+		cells = generatePatternCells(w, h, c.Preset)
 	} else {
-		cells = generateRandomCells(w, h)
 		colors = defaultColors()
-		fps = 23
+		fps = defaultFPS
+		cells = generatePatternCells(w, h, "random")
 	}
 
 	return &Game{
@@ -244,21 +234,6 @@ func (g *Game) renderGamestate() {
 	_ = offset
 }
 
-func (g *Game) renderInt(msg string, value int, offset int) int {
-	str := fmt.Sprintf("%s %d", msg, value)
-	gridWidth := len(g.grid.cells)
-
-	for i, rune := range str {
-		g.screen.SetContent(gridWidth-len(str)+i, offset, rune, nil,
-			tcell.StyleDefault.
-				Foreground(tcell.ColorWhite).
-				Background(tcell.ColorBlack))
-	}
-
-	offset++
-	return offset
-}
-
 func (g *Game) renderContent(msg string, offset int) int {
 	gridWidth := len(g.grid.cells)
 
@@ -271,6 +246,12 @@ func (g *Game) renderContent(msg string, offset int) int {
 
 	offset++
 	return offset
+
+}
+
+func (g *Game) renderInt(msg string, value int, offset int) int {
+	str := fmt.Sprintf("%s %d", msg, value)
+	return g.renderContent(str, offset)
 }
 
 func (g *Game) progress() {
@@ -331,7 +312,6 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 	centerX, centerY := w/2, h/2
 
 	switch pattern {
-	// oscillators
 	case "blinker":
 		points := []struct{ x, y int }{
 			{centerX - 1, centerY}, {centerX, centerY},
@@ -415,50 +395,57 @@ func generatePatternCells(w int, h int, pattern string) [][]bool {
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
+	case "random":
+		fallthrough
 	default:
-		return generateRandomCells(w, h)
-	}
+		cells = make([][]bool, w)
+		for i := range cells {
+			cells[i] = make([]bool, h)
+		}
 
-	return cells
-}
-
-func generateRandomCells(w int, h int) [][]bool {
-	cells := make([][]bool, w)
-	for i := range cells {
-		cells[i] = make([]bool, h)
-	}
-
-	rand.New(rand.NewSource(time.Now().UnixNano()))
-	for x := 0; x < len(cells); x++ {
-		for y := 0; y < len(cells[x]); y++ {
-			cells[x][y] = rand.Float32() < 0.25
+		rand.New(rand.NewSource(time.Now().UnixNano()))
+		for x := 0; x < len(cells); x++ {
+			for y := 0; y < len(cells[x]); y++ {
+				cells[x][y] = rand.Float32() < 0.25
+			}
 		}
 	}
 
 	return cells
 }
 
-func readConfig() (*Config, error) {
-	file, err := os.Open("gol-config.json")
-	// if the file isnt found that is ok, just continue with defaults
+func readConfig() *Config {
+	file, err := os.Open(defaultFilename)
 	if err != nil {
-		return nil, nil
+		// if the file isnt found that is ok, just continue with defaults
+		msg := fmt.Sprintf("Cannot open config file: '%s'. Continued with defaults.",
+			defaultFilename)
+		newAppWarning(msg, "Make sure the file exists and is accessible by the program.").
+			showAppWarning()
+
+		return nil
 	}
 	defer file.Close()
 
 	bytes, err := io.ReadAll(file)
 	if err != nil {
-		return nil, err
+		msg := fmt.Sprintf("Cannot read config file: '%s'. Continued with defaults.",
+			defaultFilename)
+		newAppWarning(msg, "Please try re-running the program.").
+			showAppWarning()
+
+		return nil
 	}
 
 	var config Config
 	if err := json.Unmarshal(bytes, &config); err != nil {
-		return nil, err
+		msg := fmt.Sprintf("Cannot parse JSON in config file: '%s'. Continued with defaults.",
+			defaultFilename)
+		newAppWarning(msg, "Please ensure that the JSON contains no syntactical errors.").
+			showAppWarning()
+
+		return nil
 	}
 
-	return &config, nil
-}
-
-func reportError(msg error) {
-	log.Fatalf("[ERROR] '%+v'", msg)
+	return &config
 }
