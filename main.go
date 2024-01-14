@@ -59,7 +59,7 @@ func initScreen() tcell.Screen {
 			"Please try to re-run the program.").showAppErrorFatal()
 	}
 
-	if err := screen.Init(); err == nil {
+	if err := screen.Init(); err != nil {
 		newAppError(err, "Cannot initalise the terminal screen.",
 			"Please try to re-run the program, and maybe reset the terminal using `$ reset`").showAppErrorFatal()
 	}
