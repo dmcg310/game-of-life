@@ -21,3 +21,5 @@
 go.work
 
 todo
+bin/
+game-of-life

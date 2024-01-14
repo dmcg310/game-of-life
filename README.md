@@ -1,5 +1,23 @@
 # game-of-life
 
+### Running
+
+Build
+```sh
+go build -o bin/game-of-life ./src
+```
+
+Run
+```sh
+./bin/game-of-life
+```
+
+or
+
+```sh
+go build -o bin/game-of-life ./src && ./bin/game-of-life
+```
+
 ### Colors
 
 Following colors are known to be supported:
