@@ -26,6 +26,11 @@ func NewGame(c *Config) *Game {
 func (g *Game) Run(screen tcell.Screen, grid *Grid, colors *Colors) {
 	eventq := make(chan tcell.Event)
 	quitq := make(chan struct{})
+
+    if g.FPS == 0 {
+        g.FPS = 23
+    }
+
 	ticker := time.NewTicker(time.Second / time.Duration(g.FPS))
 	defer ticker.Stop()
 

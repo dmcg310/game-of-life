@@ -1,6 +1,6 @@
 {
     "preset": "random",
-    "cell-color": "blue",
+    "cell-color": "gray",
     "background-color": "white",
     "scale-factor": 1,
     "fps": 23
