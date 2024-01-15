@@ -2,6 +2,8 @@
 
 A terminal implementation of Conway's Game of Life, a cellular automaton created by mathematician John Conway. This program transforms your terminal into a dynamic playground for exploring various patterns and behaviors within the game.
 
+![Game-of-Life](game-of-life.gif)
+
 ## Features
 - **Customizable Patterns**: Choose from a variety of predefined patterns like blinker, toad, beacon, and more.
 - **Dynamic Color Schemes**: Personalize your experience with a selection of colors for cells and backgrounds.
@@ -41,7 +43,7 @@ A terminal implementation of Conway's Game of Life, a cellular automaton created
    - Press 'p' to pause/resume the game at the current turn. Once paused you can use 'space' to step through one turn at a time.
 
 ## Configuration
-- The program looks for `gol-config.json` in the current directory or the default configuration location based on your system (e.g., `/Users/<username>/Library/Application Support/gol/gol-config.json` for MacOS).
+- The program looks for `gol-config.json` in the current directory or the default configuration location based on your system (e.g., `/Users/<username>/Library/Application Support/gol/gol-config.json` for MacOS, and `/home/&lt;username&gt;/.config/gol/` for Linux file systems).
 - A sample configuration file:
   ```js
   {
