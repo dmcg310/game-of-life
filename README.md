@@ -13,7 +13,6 @@ Default
     "preset": "random",
     "cell-color": "gray",
     "background-color": "white",
-    "scale-factor": 1,
     "fps": 23
 }
 ```

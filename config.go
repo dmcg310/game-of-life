@@ -13,7 +13,6 @@ type Config struct {
 	Preset          string `json:"preset"`
 	CellColor       string `json:"cell-color"`
 	BackgroundColor string `json:"background-color"`
-	ScaleFactor     int    `json:"scale-factor"`
 	FPS             int    `json:"fps"`
 }
 
@@ -40,7 +39,6 @@ func NewConfigWithDefaults() *Config {
 		Preset:          "random",
 		CellColor:       "white",
 		BackgroundColor: "black",
-		ScaleFactor:     1,
 		FPS:             23,
 	}
 }
