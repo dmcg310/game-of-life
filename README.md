@@ -18,9 +18,35 @@ or
 go build -o bin/game-of-life ./src && ./bin/game-of-life
 ```
 
+```sh
+go install
+```
+
+this will install into $GOPATH/bin then run
+
+```sh
+game-of-life
+```
+
+```sh
+game-of-life -h
+```
+
+### Patterns
+
+case sensitive
+- blinker
+- toad
+- beacon
+- lwss
+- gosper-glider-gun
+- glider
+- block
+- random
+
 ### Colors
 
-Following colors are known to be supported:
+Following colors are supported:
 - black
 - maroon
 - green
@@ -42,3 +68,4 @@ Following colors are known to be supported:
 
 - [tcell](https://github.com/gdamore/tcell)
 - [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
+- [cli](https://github.com/urfave/cli)

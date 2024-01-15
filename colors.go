@@ -3,14 +3,14 @@ package main
 import "github.com/gdamore/tcell/v2"
 
 type Colors struct {
-	cellStyle       tcell.Style
-	backgroundStyle tcell.Style
+	CellStyle       tcell.Style
+	BackgroundStyle tcell.Style
 }
 
 func DefaultColors() *Colors {
 	return &Colors{
-		cellStyle:       tcell.StyleDefault,
-		backgroundStyle: tcell.StyleDefault,
+		CellStyle:       tcell.StyleDefault,
+		BackgroundStyle: tcell.StyleDefault,
 	}
 }
 
@@ -32,7 +32,7 @@ func CustomColors(c *Config) *Colors {
 	}
 
 	return &Colors{
-		cellStyle:       cellStyle,
-		backgroundStyle: backgroundStyle,
+		CellStyle:       cellStyle,
+		BackgroundStyle: backgroundStyle,
 	}
 }

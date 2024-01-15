@@ -6,8 +6,8 @@ import (
 )
 
 type Grid struct {
-	cells          [][]bool
-	needsRefreshed bool
+	Cells          [][]bool
+	NeedsRefreshed bool
 }
 
 func NewGrid(w int, h int, pattern string) *Grid {
@@ -60,7 +60,7 @@ func NewGrid(w int, h int, pattern string) *Grid {
 		for _, p := range points {
 			cells[p.x][p.y] = true
 		}
-	case "gosper glider gun":
+	case "gosper-glider-gun":
 		offsetX, offsetY := centerX-18, centerY-5
 		points := []struct{ x, y int }{
 			{offsetX + 0, offsetY + 4}, {offsetX + 0, offsetY + 5},
@@ -105,6 +105,9 @@ func NewGrid(w int, h int, pattern string) *Grid {
 	case "random":
 		fallthrough
 	default:
+		NewAppWarning("Unknown pattern found. Continued with random as a default.",
+			"Check the pattern exists or any typos.").ShowAppWarning()
+
 		cells = make([][]bool, w)
 		for i := range cells {
 			cells[i] = make([]bool, h)
@@ -119,7 +122,7 @@ func NewGrid(w int, h int, pattern string) *Grid {
 	}
 
 	return &Grid{
-		cells:          cells,
-		needsRefreshed: true,
+		Cells:          cells,
+		NeedsRefreshed: true,
 	}
 }

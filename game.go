@@ -68,10 +68,10 @@ func (g *Game) Run(screen tcell.Screen, grid *Grid, colors *Colors) {
 	}()
 
 	for {
-		if grid.needsRefreshed {
+		if grid.NeedsRefreshed {
 			g.RenderGamestate(grid, screen, colors)
 			screen.Show()
-			grid.needsRefreshed = false
+			grid.NeedsRefreshed = false
 		}
 
 		select {
@@ -108,12 +108,12 @@ func (g *Game) Run(screen tcell.Screen, grid *Grid, colors *Colors) {
 func (g *Game) RenderGamestate(grid *Grid, screen tcell.Screen, colors *Colors) {
 	cellChar := '█'
 
-	for x := 0; x < len(grid.cells); x++ {
-		for y := 0; y < len(grid.cells[x]); y++ {
-			if grid.cells[x][y] {
-				screen.SetContent(x, y, cellChar, nil, colors.cellStyle)
+	for x := 0; x < len(grid.Cells); x++ {
+		for y := 0; y < len(grid.Cells[x]); y++ {
+			if grid.Cells[x][y] {
+				screen.SetContent(x, y, cellChar, nil, colors.CellStyle)
 			} else {
-				screen.SetContent(x, y, ' ', nil, colors.backgroundStyle)
+				screen.SetContent(x, y, ' ', nil, colors.BackgroundStyle)
 			}
 		}
 	}
@@ -128,12 +128,12 @@ func (g *Game) RenderGamestate(grid *Grid, screen tcell.Screen, colors *Colors) 
 		offset = g.RenderContent(grid, screen, "RUNNING", offset)
 	}
 
-	grid.needsRefreshed = false
+	grid.NeedsRefreshed = false
 	_ = offset
 }
 
 func (g *Game) progress(grid *Grid) {
-	currentGrid := grid.cells
+	currentGrid := grid.Cells
 	tempGrid := make([][]bool, len(currentGrid))
 
 	for x := range currentGrid {
@@ -149,8 +149,8 @@ func (g *Game) progress(grid *Grid) {
 		}
 	}
 
-	grid.cells = tempGrid
-	grid.needsRefreshed = true
+	grid.Cells = tempGrid
+	grid.NeedsRefreshed = true
 	g.Turn++
 }
 
@@ -167,7 +167,7 @@ func (g *Game) countNeighbors(x int, y int, grid *Grid) int {
 			ny := y + dy
 
 			if g.withinBounds(nx, ny, grid) {
-				if grid.cells[nx][ny] {
+				if grid.Cells[nx][ny] {
 					count++
 				}
 			}
@@ -178,13 +178,13 @@ func (g *Game) countNeighbors(x int, y int, grid *Grid) int {
 }
 
 func (g *Game) withinBounds(x int, y int, grid *Grid) bool {
-	return x >= 0 && x < len(grid.cells) && y >= 0 && y < len(grid.cells[x])
+	return x >= 0 && x < len(grid.Cells) && y >= 0 && y < len(grid.Cells[x])
 }
 
 func (g *Game) RenderContent(
 	grid *Grid, screen tcell.Screen, msg string, offset int,
 ) int {
-	gridWidth := len(grid.cells)
+	gridWidth := len(grid.Cells)
 
 	for i, rune := range msg {
 		screen.SetContent(gridWidth-len(msg)+i, offset, rune, nil,

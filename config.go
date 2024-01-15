@@ -26,8 +26,8 @@ func NewConfig(bytes []byte) *Config {
 	if err := json.Unmarshal(bytes, &config); err != nil {
 		msg := fmt.Sprintf("Cannot parse JSON in config file: '%s'. Continued with defaults.",
 			defaultFilename)
-		newAppWarning(msg, "Please ensure that the JSON contains no syntactical errors.").
-			showAppWarning()
+		NewAppWarning(msg, "Please ensure that the JSON contains no syntactical errors.").
+			ShowAppWarning()
 
 		return nil
 	}
@@ -51,8 +51,8 @@ func ReadConfig() []byte {
 		// if the file isnt found that is ok, just continue with defaults
 		msg := fmt.Sprintf("Cannot open config file: '%s'. Continued with defaults.",
 			defaultFilename)
-		newAppWarning(msg, "Make sure the file exists and is accessible by the program.").
-			showAppWarning()
+		NewAppWarning(msg, "Make sure the file exists and is accessible by the program.").
+			ShowAppWarning()
 
 		return nil
 	}
@@ -62,8 +62,8 @@ func ReadConfig() []byte {
 	if err != nil {
 		msg := fmt.Sprintf("Cannot read config file: '%s'. Continued with defaults.",
 			defaultFilename)
-		newAppWarning(msg, "Please try re-running the program.").
-			showAppWarning()
+		NewAppWarning(msg, "Please try re-running the program.").
+			ShowAppWarning()
 
 		return nil
 	}
