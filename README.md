@@ -2,9 +2,30 @@
 
 ### Running
 
+Will check current directory for 'gol-config.json' first then the default configuration location based on your system.
+MacOS:
+- /Users/&lt;username&gt;/Library/Application Support/gol/gol-config.json
+
+This file will not be created automatically.
+Default
+```js
+{
+    "preset": "random",
+    "cell-color": "gray",
+    "background-color": "white",
+    "scale-factor": 1,
+    "fps": 23
+}
+```
+
+Echo configuration directory: 
+```sh 
+game-of-life cl
+```
+
 Build
 ```sh
-go build -o bin/game-of-life ./src
+go build -o bin/game-of-life
 ```
 
 Run
@@ -15,7 +36,7 @@ Run
 or
 
 ```sh
-go build -o bin/game-of-life ./src && ./bin/game-of-life
+go build -o bin/game-of-life && ./bin/game-of-life
 ```
 
 ```sh

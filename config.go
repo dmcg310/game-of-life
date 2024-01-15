@@ -46,15 +46,29 @@ func NewConfigWithDefaults() *Config {
 }
 
 func ReadConfig() []byte {
+	var file *os.File
+
 	file, err := os.Open(defaultFilename)
 	if err != nil {
-		// if the file isnt found that is ok, just continue with defaults
-		msg := fmt.Sprintf("Cannot open config file: '%s'. Continued with defaults.",
-			defaultFilename)
-		NewAppWarning(msg, "Make sure the file exists and is accessible by the program.").
-			ShowAppWarning()
+        // if not in current directory check the configuration directory
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			NewAppWarning("Cannot get the current configuration directory. Continued with defaults.",
+				"Please try re-running the program.").ShowAppWarning()
 
-		return nil
+			return nil
+		}
+
+		path := fmt.Sprintf("%s/gol/%s", configDir, defaultFilename)
+		file, err = os.Open(path)
+		if err != nil {
+			msg := fmt.Sprintf("Cannot open config file: '%s'. Continued with defaults.",
+				defaultFilename)
+			NewAppWarning(msg, "Make sure the file exists and is accessible by the program.").
+				ShowAppWarning()
+
+			return nil
+		}
 	}
 	defer file.Close()
 
