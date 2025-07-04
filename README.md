@@ -1,86 +1,124 @@
-# game-of-life
+# Game of Life
 
-A terminal implementation of Conway's Game of Life, a cellular automaton created by mathematician John Conway. This program transforms your terminal into a dynamic playground for exploring various patterns and behaviors within the game.
+A terminal implementation of Conway's Game of Life written in Go. This cellular automaton transforms your terminal into a dynamic playground for exploring various patterns and behaviors.
 
 ![Game-of-Life](game-of-life.gif)
 
 ## Features
-- **Customizable Patterns**: Choose from a variety of predefined patterns like blinker, toad, beacon, and more.
-- **Dynamic Color Schemes**: Personalize your experience with a selection of colors for cells and backgrounds.
-- **Flexible Configuration**: Tailor the game's behavior with custom FPS settings and more through a configuration file or command-line arguments.
-- **Responsive Terminal Display**: Watch the Game of Life unfold in real-time within your terminal.
+
+- **Multiple Patterns**: Choose from predefined patterns like blinker, toad, beacon, glider, and more
+- **Customizable Colors**: Configure cell and background colors through JSON configuration
+- **Flexible Settings**: Adjust FPS and other behaviors via config file or command-line arguments
+- **Interactive Controls**: Pause, resume, and step through generations manually
 
 ## Installation
-1. **Prerequisites**: Ensure you have Go installed on your system.
-2. **Getting the Program**:
-   - Clone the repository or download the source code.
-   - Alternatively, you can directly install the program using Go:
-     ```sh
-     go install
-     ```
-     This command installs the program into `$GOPATH/bin`. After installation, you can run the program using `game-of-life` command in your terminal.
+
+### Prerequisites
+- Go 1.21 or later
+
+### Install from Source
+```bash
+git clone https://github.com/dmcg310/game-of-life.git
+cd game-of-life
+make install
+```
+
+### Quick Build
+```bash
+make build
+```
 
 ## Usage
-1. **Running the Game**:
-   - Directly execute the binary after [building](#build-from-source):
-     ```sh
-     ./bin/game-of-life
-     ```
-   - Or, if installed via `go install`, simply run:
-     ```sh
-     game-of-life
-     ```
-2. **Command-Line Arguments**:
-   - Optionally, specify a pattern and FPS:
-     ```sh
-     game-of-life [pattern] [fps]
-     ```
-   - Use `-h` for help:
-     ```sh
-     game-of-life -h
-     ```
-3. **During the Game**:
-   - Press 'p' to pause/resume the game at the current turn. Once paused you can use 'space' to step through one turn at a time.
+
+### Basic Usage
+```bash
+# Run with default settings
+make run
+
+# Run with specific pattern and FPS
+make run-pattern PATTERN=glider FPS=30
+
+# Or use the binary directly
+./bin/game-of-life [pattern] [fps]
+```
+
+### Available Commands
+```bash
+# Show available patterns
+make patterns
+
+# Show configuration directory
+make config-location
+
+# Show help
+make help
+```
+
+### Controls
+- **p**: Pause/resume the simulation
+- **Space**: Step through one generation when paused
+- **q/Esc/Ctrl+C**: Quit the program
 
 ## Configuration
-- The program looks for `gol-config.json` in the current directory or the default configuration location based on your system (e.g., `/Users/<username>/Library/Application Support/gol/gol-config.json` for MacOS, and `/home/&lt;username&gt;/.config/gol/` for Linux file systems).
-- A sample configuration file:
-  ```js
-  {
-      "preset": "random",
-      "cell-color": "gray",
-      "background-color": "white",
-      "scale-factor": 1,
-      "fps": 23
-  }
-  ```
-- To find out the configuration directory path, use:
-```sh
-game-of-life cl
+
+The program looks for `gol-config.json` in the current directory or your system's config directory:
+
+```json
+{
+    "preset": "random",
+    "cell-color": "white",
+    "background-color": "black",
+    "fps": 23
+}
 ```
 
-## Available Patterns
-The game supports various patterns which are case-sensitive:
-- blinker, toad, beacon, lwss, gosper-glider-gun, glider, block, random
+### Available Patterns
+- `blinker`, `toad`, `beacon`, `lwss`, `gosper-glider-gun`, `glider`, `block`, `random`
 
-## Color Options
-You can choose from a range of supported colors for cells and background:
-- black, maroon, green, olive, navy, purple, teal, silver, gray, red, lime, yellow, blue, fuchsia, aqua, white
+### Supported Colors
+- `black`, `maroon`, `green`, `olive`, `navy`, `purple`, `teal`, `silver`
+- `gray`, `red`, `lime`, `yellow`, `blue`, `fuchsia`, `aqua`, `white`
 
-<a name="build-from-source"></a>
-## Building from Source
-- To compile the program:
-```sh
-go build -o bin/game-of-life
-```
-This command generates an executable in the bin directory.
-- You can also build and run in one step:
-```sh
-go build -o bin/game-of-life && ./bin/game-of-life
+## Development
+
+### Build Commands
+```bash
+make all          # Clean, format, vet, and build
+make build        # Build the application
+make dev-build    # Build with race detection
+make clean        # Clean build artifacts
 ```
 
-## References and Acknowledgements
+### Code Quality
+```bash
+make fmt          # Format code
+make vet          # Vet code
+make tidy         # Tidy dependencies
+```
 
-- **tcell Library**: This project leverages the [tcell library](https://github.com/gdamore/tcell) for managing terminal graphics and events.
-- **Conway's Game of Life**: Learn more about the original concept on [Wikipedia](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
-- **cli Package**: Command-line interactions are powered by the [cli package](https://github.com/urfave/cli).
+### Cross-Platform Builds
+```bash
+make build-all    # Build for Linux, Windows, and macOS
+make release      # Create release archives
+```
+
+## Project Structure
+
+```
+game-of-life/
+├── cmd/                    # Application entry point
+├── internal/
+│   ├── cli/               # Command-line interface
+│   ├── config/            # Configuration management
+│   ├── display/           # Terminal display handling
+│   ├── errors/            # Error handling
+│   └── game/              # Core game logic and grid
+├── Makefile               # Build automation
+└── gol-config.json        # Default configuration
+```
+
+## References
+
+- [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) - Original concept
+- [tcell](https://github.com/gdamore/tcell) - Terminal interface library
+- [cli](https://github.com/urfave/cli) - Command-line interface framework
