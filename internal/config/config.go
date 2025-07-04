@@ -1,8 +1,9 @@
-package main
+package config
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dmcg310/game-of-life/internal/errors"
 	"io"
 	"os"
 )
@@ -25,7 +26,7 @@ func NewConfig(bytes []byte) *Config {
 	if err := json.Unmarshal(bytes, &config); err != nil {
 		msg := fmt.Sprintf("Cannot parse JSON in config file: '%s'. Continued with defaults.",
 			defaultFilename)
-		NewAppWarning(msg, "Please ensure that the JSON contains no syntactical errors.").
+		errors.NewAppWarning(msg, "Please ensure that the JSON contains no syntactical errors.").
 			ShowAppWarning()
 
 		return nil
@@ -48,10 +49,10 @@ func ReadConfig() []byte {
 
 	file, err := os.Open(defaultFilename)
 	if err != nil {
-        // if not in current directory check the configuration directory
+		// if not in current directory check the configuration directory
 		configDir, err := os.UserConfigDir()
 		if err != nil {
-			NewAppWarning("Cannot get the current configuration directory. Continued with defaults.",
+			errors.NewAppWarning("Cannot get the current configuration directory. Continued with defaults.",
 				"Please try re-running the program.").ShowAppWarning()
 
 			return nil
@@ -62,7 +63,7 @@ func ReadConfig() []byte {
 		if err != nil {
 			msg := fmt.Sprintf("Cannot open config file: '%s'. Continued with defaults.",
 				defaultFilename)
-			NewAppWarning(msg, "Make sure the file exists and is accessible by the program.").
+			errors.NewAppWarning(msg, "Make sure the file exists and is accessible by the program.").
 				ShowAppWarning()
 
 			return nil
@@ -74,7 +75,7 @@ func ReadConfig() []byte {
 	if err != nil {
 		msg := fmt.Sprintf("Cannot read config file: '%s'. Continued with defaults.",
 			defaultFilename)
-		NewAppWarning(msg, "Please try re-running the program.").
+		errors.NewAppWarning(msg, "Please try re-running the program.").
 			ShowAppWarning()
 
 		return nil

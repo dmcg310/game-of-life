@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/dmcg310/game-of-life/internal/display"
+	"github.com/dmcg310/game-of-life/internal/errors"
+	"github.com/dmcg310/game-of-life/internal/game"
 	"os"
 
+	_cli "github.com/dmcg310/game-of-life/internal/cli"
 	"github.com/urfave/cli/v2"
 )
 
@@ -17,14 +21,14 @@ func main() {
         which additionally includes color options.`,
 		ArgsUsage: "[pattern] [fps]",
 		Action: func(ctx *cli.Context) error {
-			args := ParseCLIArgs(ctx)
-			config, colors := PrepareConfigAndColors(args)
+			args := _cli.ParseCLIArgs(ctx)
+			config, colors := _cli.PrepareConfigAndColors(args)
 
-			s := InitScreen()
+			s := display.InitScreen()
 			w, h := s.Size()
-			g := NewGrid(w, h, config.Preset)
+			g := game.NewGrid(w, h, config.Preset)
 
-			NewGame(config).Run(s, g, colors)
+			game.NewGame(config).Run(s, g, colors)
 
 			return nil
 		},
@@ -52,7 +56,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		NewAppError(err, "Cannot run the current application.",
+		errors.NewAppError(err, "Cannot run the current application.",
 			"Please try to re-run the program.").ShowAppErrorFatal()
 	}
 }

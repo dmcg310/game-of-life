@@ -1,6 +1,7 @@
-package main
+package game
 
 import (
+	"github.com/dmcg310/game-of-life/internal/errors"
 	"math/rand"
 	"time"
 )
@@ -105,7 +106,7 @@ func NewGrid(w int, h int, pattern string) *Grid {
 	case "random":
 		fallthrough
 	default:
-		NewAppWarning("Unknown pattern found. Continued with random as a default.",
+		errors.NewAppWarning("Unknown pattern found. Continued with random as a default.",
 			"Check the pattern exists or any typos.").ShowAppWarning()
 
 		cells = make([][]bool, w)

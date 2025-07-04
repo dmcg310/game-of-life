@@ -1,9 +1,10 @@
-package main
+package cli
 
 import (
+	"github.com/urfave/cli/v2"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
+	configuration "github.com/dmcg310/game-of-life/internal/config"
 )
 
 type Arguments struct {
@@ -27,12 +28,12 @@ func ParseCLIArgs(ctx *cli.Context) *Arguments {
 	return args
 }
 
-func PrepareConfigAndColors(args *Arguments) (*Config, *Colors) {
-	configFile := ReadConfig()
-	config := NewConfig(configFile)
+func PrepareConfigAndColors(args *Arguments) (*configuration.Config, *configuration.Colors) {
+	configFile := configuration.ReadConfig()
+	config := configuration.NewConfig(configFile)
 
 	if config == nil {
-		config = NewConfigWithDefaults()
+		config = configuration.NewConfigWithDefaults()
 	}
 
 	if args.Preset != "" {
@@ -43,11 +44,11 @@ func PrepareConfigAndColors(args *Arguments) (*Config, *Colors) {
 		config.FPS = args.FPS
 	}
 
-	var colors *Colors
+	var colors *configuration.Colors
 	if configFile != nil {
-		colors = CustomColors(config)
+		colors = configuration.CustomColors(config)
 	} else {
-		colors = DefaultColors()
+		colors = configuration.DefaultColors()
 	}
 
 	return config, colors

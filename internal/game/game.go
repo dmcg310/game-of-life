@@ -1,9 +1,10 @@
-package main
+package game
 
 import (
 	"fmt"
 	"time"
 
+	configuration "github.com/dmcg310/game-of-life/internal/config"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -14,7 +15,7 @@ type Game struct {
 	FPS       int
 }
 
-func NewGame(c *Config) *Game {
+func NewGame(c *configuration.Config) *Game {
 	return &Game{
 		IsRunning: true,
 		IsPaused:  true,
@@ -23,13 +24,13 @@ func NewGame(c *Config) *Game {
 	}
 }
 
-func (g *Game) Run(screen tcell.Screen, grid *Grid, colors *Colors) {
+func (g *Game) Run(screen tcell.Screen, grid *Grid, colors *configuration.Colors) {
 	eventq := make(chan tcell.Event)
 	quitq := make(chan struct{})
 
-    if g.FPS == 0 {
-        g.FPS = 23
-    }
+	if g.FPS == 0 {
+		g.FPS = 23
+	}
 
 	ticker := time.NewTicker(time.Second / time.Duration(g.FPS))
 	defer ticker.Stop()
@@ -105,7 +106,7 @@ func (g *Game) Run(screen tcell.Screen, grid *Grid, colors *Colors) {
 	}
 }
 
-func (g *Game) RenderGamestate(grid *Grid, screen tcell.Screen, colors *Colors) {
+func (g *Game) RenderGamestate(grid *Grid, screen tcell.Screen, colors *configuration.Colors) {
 	cellChar := '█'
 
 	for x := 0; x < len(grid.Cells); x++ {
@@ -186,8 +187,8 @@ func (g *Game) RenderContent(
 ) int {
 	gridWidth := len(grid.Cells)
 
-	for i, rune := range msg {
-		screen.SetContent(gridWidth-len(msg)+i, offset, rune, nil,
+	for i, r := range msg {
+		screen.SetContent(gridWidth-len(msg)+i, offset, r, nil,
 			tcell.StyleDefault.
 				Foreground(tcell.ColorWhite).
 				Background(tcell.ColorBlack))
